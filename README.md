@@ -43,7 +43,7 @@ The SNP codes are based on real published research:
 
 
 **This needs proper 3d rendering functions and models to work as I want it.**
-<img width="1534" height="1024" alt="image" src="https://github.com/user-attachments/assets/9cd67448-78a3-4844-82d9-04b56a4f8786" />
+<img width="1534" height="1024" alt="image" src="https://github.com/user-attachments/assets/505a5861-7a4e-4a42-aa10-455792acda41" />
 
 
 
