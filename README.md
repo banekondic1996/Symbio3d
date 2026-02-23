@@ -1,4 +1,4 @@
-# 🧬 Gene Modeler — 3D Human Trait Visualizer
+# 🧬 Gene Modeler — 3D Human Trait Visualizer - Symbio3d (This is just testing concept, and not for usage)
 
 A desktop NW.js application that lets you build a 3D human model by selecting real genetic traits, then outputs the actual SNP gene codes associated with each phenotype.
 
