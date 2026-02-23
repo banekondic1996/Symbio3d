@@ -1,0 +1,21 @@
+{
+  "name": "human-gene-modeler",
+  "version": "1.0.0",
+  "description": "3D Human Gene Modeler - visualize genetic traits",
+  "main": "index.html",
+  "window": {
+    "title": "Gene Modeler — 3D Human Trait Visualizer",
+    "width": 1400,
+    "height": 900,
+    "min_width": 1100,
+    "min_height": 700,
+    "icon": "icon.png"
+  },
+  "chromium-args": "--enable-webgl --enable-gpu-rasterization",
+  "dependencies": {
+    "nw": "^0.108.0"
+  },
+    "scripts": {
+    "start": "nw ."
+  }
+}

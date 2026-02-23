@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gene Modeler — 3D Human Trait Visualizer</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap');
+
+    :root {
+      --bg: #0a0c0f;
+      --surface: #111418;
+      --surface2: #181c22;
+      --border: #2a2f3a;
+      --accent: #00d4aa;
+      --accent2: #7c6af7;
+      --accent3: #f7a35c;
+      --text: #e8ecf0;
+      --text-dim: #6b7280;
+      --text-muted: #3d4451;
+      --gene: #00d4aa;
+      --snp: #7c6af7;
+      --error: #f05060;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 320px 1fr 380px;
+      grid-template-rows: 56px 1fr;
+    }
+
+    /* HEADER */
+    header {
+      grid-column: 1 / -1;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 20px;
+      position: relative;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+
+    .logo span { color: var(--accent); }
+
+    .header-subtitle {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-left: auto;
+    }
+
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* LEFT PANEL - TRAIT CONTROLS */
+    .left-panel {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .left-panel::-webkit-scrollbar { width: 4px; }
+    .left-panel::-webkit-scrollbar-track { background: var(--bg); }
+    .left-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .panel-header {
+      padding: 20px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-header::before {
+      content: '';
+      width: 3px; height: 14px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .trait-category {
+      padding: 4px 0;
+    }
+
+    .category-label {
+      padding: 12px 20px 6px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .trait-section {
+      padding: 0 12px 8px;
+    }
+
+    .trait-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      padding: 6px 8px 4px;
+      letter-spacing: 0.05em;
+    }
+
+    .trait-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      padding: 0 8px 4px;
+    }
+
+    .trait-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-dim);
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .trait-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .trait-btn:hover { border-color: var(--accent); color: var(--text); }
+    .trait-btn:hover::before { opacity: 0.08; }
+
+    .trait-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(0, 212, 170, 0.08);
+    }
+
+    .trait-btn.active::before { opacity: 0; }
+
+    .color-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.2);
+      flex-shrink: 0;
+    }
+
+    /* VIEWPORT - 3D CANVAS */
+    .viewport {
+      position: relative;
+      background: #06080b;
+      overflow: hidden;
+    }
+
+    #canvas3d {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .viewport-overlay {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+    }
+
+    .view-btn {
+      background: rgba(17, 20, 24, 0.85);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+      backdrop-filter: blur(8px);
+    }
+
+    .view-btn:hover, .view-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .controls-hint {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+
+    /* RIGHT PANEL - GENE CODE OUTPUT */
+    .right-panel {
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .right-panel::-webkit-scrollbar { width: 4px; }
+    .right-panel::-webkit-scrollbar-track { background: var(--bg); }
+    .right-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .gene-output {
+      padding: 16px;
+      flex: 1;
+    }
+
+    .gene-summary-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .gene-card-header {
+      padding: 10px 14px;
+      background: rgba(0, 212, 170, 0.06);
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .gene-card-body {
+      padding: 12px 14px;
+    }
+
+    .trait-display {
+      margin-bottom: 14px;
+    }
+
+    .trait-display-name {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .trait-display-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .gene-loci {
+      margin-top: 8px;
+    }
+
+    .locus-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .locus-row:last-child { border-bottom: none; }
+
+    .locus-gene {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--gene);
+      min-width: 60px;
+    }
+
+    .locus-snp {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--snp);
+      min-width: 100px;
+    }
+
+    .locus-effect {
+      font-size: 9px;
+      color: var(--text-dim);
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    .full-code-block {
+      background: #060a0e;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-top: 12px;
+    }
+
+    .code-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 8px;
+    }
+
+    .code-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--accent);
+      line-height: 1.8;
+      word-break: break-all;
+    }
+
+    .copy-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .heritage-tag {
+      display: inline-block;
+      background: rgba(124, 106, 247, 0.12);
+      border: 1px solid rgba(124, 106, 247, 0.3);
+      color: var(--accent2);
+      font-size: 9px;
+      font-family: 'Space Mono', monospace;
+      padding: 2px 7px;
+      border-radius: 3px;
+      margin-top: 4px;
+    }
+
+    .freq-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .freq-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    .no-trait {
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .genome-summary {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--accent);
+      border-radius: 10px;
+      padding: 14px;
+      margin: 0 16px 16px;
+    }
+
+    .genome-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .full-genome-code {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: #4a6080;
+      line-height: 1.7;
+      word-break: break-all;
+    }
+
+    .full-genome-code .highlight { color: var(--accent); }
+    .full-genome-code .highlight2 { color: var(--accent2); }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🧬</div>
+      GENE<span>MODELER</span>
+    </div>
+    <div class="header-subtitle">
+      <span class="status-dot" style="display:inline-block"></span>
+      &nbsp;3D Human Genetic Trait Visualizer — SNP Reference Build GRCh38
+    </div>
+  </header>
+
+  <!-- LEFT PANEL: Trait Controls -->
+  <div class="left-panel">
+    <div class="panel-header">Genetic Traits</div>
+    <div id="trait-controls"></div>
+  </div>
+
+  <!-- CENTER: 3D Viewport -->
+  <div class="viewport">
+    <canvas id="canvas3d"></canvas>
+    <div class="controls-hint">
+      Drag · Rotate<br>
+      Scroll · Zoom<br>
+      Right-drag · Pan
+    </div>
+    <div class="viewport-overlay">
+      <button class="view-btn active" onclick="setView('front')">FRONT</button>
+      <button class="view-btn" onclick="setView('side')">SIDE</button>
+      <button class="view-btn" onclick="setView('3/4')">3/4</button>
+      <button class="view-btn" onclick="setView('top')">TOP</button>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: Gene Code Output -->
+  <div class="right-panel">
+    <div class="panel-header">Gene Code Output</div>
+    <div class="gene-output" id="gene-output">
+      <div class="no-trait">Select traits on the left<br>to see gene codes</div>
+    </div>
+    <div class="genome-summary">
+      <div class="genome-title">⬡ Compiled Genotype</div>
+      <div class="full-genome-code" id="genome-code">// No traits selected<br>// Apply traits to generate SNP profile</div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="src/geneData.js"></script>
+  <script>
+  // =============================================
+  // STATE
+  // =============================================
+  const selectedTraits = {};
+
+  // =============================================
+  // BUILD LEFT PANEL CONTROLS
+  // =============================================
+  function buildControls() {
+    const container = document.getElementById('trait-controls');
+    
+    const categories = {
+      facial: { label: 'Facial Features', traits: [] },
+      hair: { label: 'Hair', traits: [] },
+      skin: { label: 'Skin', traits: [] },
+      body: { label: 'Body', traits: [] }
+    };
+
+    Object.entries(GENE_DATABASE).forEach(([traitKey, traitData]) => {
+      const cat = traitData.category || 'other';
+      if (categories[cat]) categories[cat].traits.push([traitKey, traitData]);
+    });
+
+    Object.entries(categories).forEach(([catKey, catData]) => {
+      if (!catData.traits.length) return;
+      const catDiv = document.createElement('div');
+      catDiv.className = 'trait-category';
+      catDiv.innerHTML = `<div class="category-label">${catData.label}</div>`;
+
+      catData.traits.forEach(([traitKey, traitData]) => {
+        const section = document.createElement('div');
+        section.className = 'trait-section';
+        section.innerHTML = `<div class="trait-name">${traitData.label}</div>`;
+
+        const opts = document.createElement('div');
+        opts.className = 'trait-options';
+
+        Object.entries(traitData.variants).forEach(([varKey, varData]) => {
+          const btn = document.createElement('button');
+          btn.className = 'trait-btn';
+          btn.dataset.trait = traitKey;
+          btn.dataset.variant = varKey;
+
+          let colorDot = '';
+          const colorVal = varData.color || varData.darkColor;
+          if (colorVal) {
+            colorDot = `<span class="color-dot" style="background:${colorVal}"></span>`;
+          }
+
+          btn.innerHTML = `${colorDot}${varData.label}`;
+          btn.addEventListener('click', () => selectTrait(traitKey, varKey, btn));
+          opts.appendChild(btn);
+        });
+
+        section.appendChild(opts);
+        catDiv.appendChild(section);
+      });
+
+      container.appendChild(catDiv);
+    });
+  }
+
+  function selectTrait(traitKey, varKey, btn) {
+    // Deselect others in same trait
+    document.querySelectorAll(`[data-trait="${traitKey}"]`).forEach(b => b.classList.remove('active'));
+    
+    if (selectedTraits[traitKey] === varKey) {
+      // Toggle off
+      delete selectedTraits[traitKey];
+    } else {
+      selectedTraits[traitKey] = varKey;
+      btn.classList.add('active');
+    }
+
+    updateModel();
+    updateGeneOutput();
+  }
+
+  // =============================================
+  // THREE.JS 3D HUMAN MODEL
+  // =============================================
+  let scene, camera, renderer, human, animFrame;
+  let isDragging = false, isRightDragging = false;
+  let prevMouse = { x: 0, y: 0 };
+  let humanGroup;
+  let bodyParts = {};
+  let targetRotY = 0, currentRotY = 0;
+
+  function initThree() {
+    const canvas = document.getElementById('canvas3d');
+    const vp = canvas.parentElement;
+
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x06080b);
+    scene.fog = new THREE.FogExp2(0x06080b, 0.025);
+
+    camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.set(0, 1.6, 4.5);
+    camera.lookAt(0, 1.2, 0);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x1a2040, 0.6);
+    scene.add(ambientLight);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    keyLight.position.set(2, 5, 3);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x00d4aa, 0.4);
+    rimLight.position.set(-3, 3, -2);
+    scene.add(rimLight);
+
+    const fillLight = new THREE.PointLight(0x7c6af7, 0.5, 8);
+    fillLight.position.set(-2, 2, 2);
+    scene.add(fillLight);
+
+    // Ground
+    const groundGeo = new THREE.PlaneGeometry(20, 20);
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x080c10,
+      roughness: 0.95,
+      metalness: 0.05
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Grid
+    const gridHelper = new THREE.GridHelper(10, 20, 0x1a2030, 0x0d1018);
+    gridHelper.position.y = 0.001;
+    scene.add(gridHelper);
+
+    buildHuman();
+
+    // Mouse controls
+    canvas.addEventListener('mousedown', e => {
+      if (e.button === 0) isDragging = true;
+      if (e.button === 2) isRightDragging = true;
+      prevMouse = { x: e.clientX, y: e.clientY };
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (isDragging && humanGroup) {
+        const dx = (e.clientX - prevMouse.x) * 0.01;
+        humanGroup.rotation.y += dx;
+      }
+      if (isRightDragging) {
+        const dy = (e.clientY - prevMouse.y) * 0.005;
+        camera.position.y -= dy;
+      }
+      prevMouse = { x: e.clientX, y: e.clientY };
+    });
+
+    window.addEventListener('mouseup', () => { isDragging = false; isRightDragging = false; });
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+    canvas.addEventListener('wheel', e => {
+      camera.position.z += e.deltaY * 0.005;
+      camera.position.z = Math.max(2, Math.min(9, camera.position.z));
+    });
+
+    resize();
+    window.addEventListener('resize', resize);
+    animate();
+  }
+
+  function resize() {
+    const vp = document.querySelector('.viewport');
+    const w = vp.clientWidth, h = vp.clientHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+
+  function buildHuman() {
+    if (humanGroup) scene.remove(humanGroup);
+    humanGroup = new THREE.Group();
+    bodyParts = {};
+
+    const skinColor = getSkinColor();
+    const eyeColor = getEyeColor();
+    const hairColor = getHairColor();
+    const hasFreckles = selectedTraits.freckles === 'present';
+    const hasDimples = selectedTraits.dimples === 'present';
+    const broadNose = selectedTraits.noseShape === 'broad';
+    const narrowNose = selectedTraits.noseShape === 'narrow';
+
+    const skinMat = new THREE.MeshStandardMaterial({
+      color: skinColor,
+      roughness: 0.75,
+      metalness: 0.02
+    });
+
+    const darkSkinMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(skinColor).multiplyScalar(0.75),
+      roughness: 0.8,
+      metalness: 0.02
+    });
+
+    const eyeMat = new THREE.MeshStandardMaterial({ color: eyeColor, roughness: 0.1, metalness: 0.5 });
+    const scleraMat = new THREE.MeshStandardMaterial({ color: 0xf5f0e8, roughness: 0.4 });
+    const hairMat = new THREE.MeshStandardMaterial({
+      color: hairColor,
+      roughness: 0.85,
+      metalness: 0.05
+    });
+    const clothMat = new THREE.MeshStandardMaterial({ color: 0x1a2a3a, roughness: 0.9 });
+    const clothMat2 = new THREE.MeshStandardMaterial({ color: 0x0d1820, roughness: 0.9 });
+    const lipMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(skinColor).multiplyScalar(0.85), roughness: 0.7 });
+
+    // --- HEIGHT ---
+    let heightScale = 1.0;
+    if (selectedTraits.height === 'short') heightScale = 0.87;
+    if (selectedTraits.height === 'tall') heightScale = 1.13;
+
+    // ---- TORSO ----
+    const torsoGeo = new THREE.CylinderGeometry(0.28, 0.24, 0.7, 12);
+    const torso = new THREE.Mesh(torsoGeo, clothMat);
+    torso.position.y = 0.9;
+    torso.castShadow = true;
+    humanGroup.add(torso);
+    bodyParts.torso = torso;
+
+    // Shirt detail
+    const shirtDetailGeo = new THREE.CylinderGeometry(0.285, 0.245, 0.05, 12);
+    const shirtDetail = new THREE.Mesh(shirtDetailGeo, clothMat2);
+    shirtDetail.position.y = 1.22;
+    humanGroup.add(shirtDetail);
+
+    // ---- NECK ----
+    const neckGeo = new THREE.CylinderGeometry(0.085, 0.1, 0.14, 10);
+    const neck = new THREE.Mesh(neckGeo, skinMat);
+    neck.position.y = 1.3;
+    neck.castShadow = true;
+    humanGroup.add(neck);
+
+    // ---- HEAD ----
+    const headGeo = new THREE.SphereGeometry(0.22, 20, 16);
+    const head = new THREE.Mesh(headGeo, skinMat);
+    head.position.y = 1.6;
+    head.scale.y = 1.15;
+    head.castShadow = true;
+    humanGroup.add(head);
+    bodyParts.head = head;
+
+    // ---- FACE DETAILS ----
+    // Eyes
+    const eyeOffsetX = 0.075;
+    const eyeOffsetY = 1.62;
+    const eyeOffsetZ = 0.19;
+
+    for (let side of [-1, 1]) {
+      const eyeSocket = new THREE.Mesh(
+        new THREE.SphereGeometry(0.036, 10, 8),
+        scleraMat
+      );
+      eyeSocket.position.set(side * eyeOffsetX, eyeOffsetY, eyeOffsetZ);
+      eyeSocket.scale.z = 0.6;
+      humanGroup.add(eyeSocket);
+
+      const iris = new THREE.Mesh(
+        new THREE.CircleGeometry(0.018, 12),
+        eyeMat
+      );
+      iris.position.set(side * eyeOffsetX, eyeOffsetY, eyeOffsetZ + 0.02);
+      humanGroup.add(iris);
+
+      // Pupil
+      const pupil = new THREE.Mesh(
+        new THREE.CircleGeometry(0.009, 8),
+        new THREE.MeshStandardMaterial({ color: 0x050505 })
+      );
+      pupil.position.set(side * eyeOffsetX, eyeOffsetY, eyeOffsetZ + 0.021);
+      humanGroup.add(pupil);
+    }
+
+    // ---- NOSE ----
+    const noseWidth = broadNose ? 1.5 : (narrowNose ? 0.7 : 1.0);
+    const noseGeo = new THREE.SphereGeometry(0.028 * noseWidth, 8, 6);
+    const nose = new THREE.Mesh(noseGeo, darkSkinMat);
+    nose.position.set(0, 1.565, 0.215);
+    nose.scale.x = noseWidth;
+    nose.scale.z = 0.7;
+    humanGroup.add(nose);
+    bodyParts.nose = nose;
+
+    // ---- MOUTH ----
+    const mouthGeo = new THREE.TorusGeometry(0.03, 0.007, 4, 10, Math.PI);
+    const mouth = new THREE.Mesh(mouthGeo, lipMat);
+    mouth.position.set(0, 1.52, 0.213);
+    mouth.rotation.z = Math.PI;
+    humanGroup.add(mouth);
+
+    // ---- DIMPLES ----
+    if (hasDimples) {
+      for (let side of [-1, 1]) {
+        const dimpleGeo = new THREE.SphereGeometry(0.012, 8, 6);
+        const dimpMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(skinColor).multiplyScalar(0.88), roughness: 0.8 });
+        const dimple = new THREE.Mesh(dimpleGeo, dimpMat);
+        dimple.position.set(side * 0.1, 1.52, 0.19);
+        dimple.scale.z = 0.3;
+        humanGroup.add(dimple);
+      }
+    }
+
+    // ---- EARS ----
+    for (let side of [-1, 1]) {
+      const earGeo = new THREE.SphereGeometry(0.05, 8, 6);
+      const ear = new THREE.Mesh(earGeo, darkSkinMat);
+      ear.position.set(side * 0.215, 1.6, 0.01);
+      ear.scale.set(0.4, 0.6, 0.3);
+      humanGroup.add(ear);
+    }
+
+    // ---- HAIR ----
+    buildHair(humanGroup, hairMat, head);
+
+    // ---- FRECKLES ----
+    if (hasFreckles) {
+      const freckleData = [
+        [0.06, 1.59, 0.215], [-0.08, 1.58, 0.213],
+        [0.1, 1.57, 0.205], [-0.05, 1.61, 0.214],
+        [0.03, 1.55, 0.216], [-0.12, 1.60, 0.200],
+        [0.14, 1.59, 0.195], [0.02, 1.63, 0.212]
+      ];
+      const freckleMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B, roughness: 0.9 });
+      freckleData.forEach(([x,y,z]) => {
+        const fGeo = new THREE.SphereGeometry(0.008, 5, 4);
+        const f = new THREE.Mesh(fGeo, freckleMat);
+        f.position.set(x, y, z);
+        f.scale.z = 0.3;
+        humanGroup.add(f);
+      });
+    }
+
+    // ---- ARMS ----
+    const armGeo = new THREE.CylinderGeometry(0.075, 0.065, 0.55, 8);
+    const forearmGeo = new THREE.CylinderGeometry(0.065, 0.055, 0.45, 8);
+    const handGeo = new THREE.SphereGeometry(0.065, 8, 6);
+
+    for (let side of [-1, 1]) {
+      const upperArm = new THREE.Mesh(armGeo, clothMat);
+      upperArm.position.set(side * 0.36, 1.0, 0);
+      upperArm.rotation.z = side * 0.15;
+      upperArm.castShadow = true;
+      humanGroup.add(upperArm);
+
+      const forearm = new THREE.Mesh(forearmGeo, skinMat);
+      forearm.position.set(side * 0.42, 0.6, 0);
+      forearm.rotation.z = side * 0.1;
+      forearm.castShadow = true;
+      humanGroup.add(forearm);
+
+      const hand = new THREE.Mesh(handGeo, darkSkinMat);
+      hand.position.set(side * 0.46, 0.32, 0);
+      hand.scale.set(1, 0.75, 0.55);
+      hand.castShadow = true;
+      humanGroup.add(hand);
+    }
+
+    // ---- PELVIS ----
+    const pelvisGeo = new THREE.CylinderGeometry(0.26, 0.22, 0.25, 12);
+    const pelvis = new THREE.Mesh(pelvisGeo, clothMat2);
+    pelvis.position.y = 0.52;
+    humanGroup.add(pelvis);
+
+    // ---- LEGS ----
+    const thighGeo = new THREE.CylinderGeometry(0.12, 0.1, 0.5, 10);
+    const shinGeo = new THREE.CylinderGeometry(0.09, 0.075, 0.45, 10);
+    const footGeo = new THREE.BoxGeometry(0.1, 0.07, 0.22);
+
+    for (let side of [-1, 1]) {
+      const thigh = new THREE.Mesh(thighGeo, clothMat2);
+      thigh.position.set(side * 0.12, 0.2, 0);
+      thigh.castShadow = true;
+      humanGroup.add(thigh);
+
+      const shin = new THREE.Mesh(shinGeo, clothMat2);
+      shin.position.set(side * 0.12, -0.23, 0);
+      shin.castShadow = true;
+      humanGroup.add(shin);
+
+      const foot = new THREE.Mesh(footGeo, new THREE.MeshStandardMaterial({ color: 0x0d1015, roughness: 0.95 }));
+      foot.position.set(side * 0.12, -0.49, 0.055);
+      foot.castShadow = true;
+      humanGroup.add(foot);
+    }
+
+    // Scale by height
+    humanGroup.scale.set(1, heightScale, 1);
+    humanGroup.position.y = 0.5 * (1 - heightScale); // Foot stays on ground
+
+    scene.add(humanGroup);
+  }
+
+  function buildHair(group, hairMat, head) {
+    const hairType = selectedTraits.hairTexture || 'wavy';
+    const hairColor = selectedTraits.hairColor || 'brown';
+
+    // Skull cap
+    const capGeo = new THREE.SphereGeometry(0.225, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55);
+    const cap = new THREE.Mesh(capGeo, hairMat);
+    cap.position.copy(head.position);
+    cap.scale.y = 1.15;
+    cap.scale.x = 0.98;
+    group.add(cap);
+
+    if (hairType === 'curly') {
+      // Curly puffs
+      for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2;
+        const r = 0.18;
+        const puffGeo = new THREE.SphereGeometry(0.065 + Math.random() * 0.02, 7, 5);
+        const puff = new THREE.Mesh(puffGeo, hairMat);
+        puff.position.set(
+          head.position.x + Math.cos(angle) * r * 0.8,
+          head.position.y + 0.13 + Math.random() * 0.08,
+          head.position.z + Math.sin(angle) * r * 0.6
+        );
+        group.add(puff);
+      }
+    } else if (hairType === 'wavy') {
+      // Flowing waves
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const strandGeo = new THREE.CylinderGeometry(0.015, 0.008, 0.25, 5);
+        const strand = new THREE.Mesh(strandGeo, hairMat);
+        strand.position.set(
+          head.position.x + Math.cos(angle) * 0.19,
+          head.position.y - 0.08,
+          head.position.z + Math.sin(angle) * 0.12
+        );
+        strand.rotation.z = Math.cos(angle) * 0.4;
+        strand.rotation.x = Math.sin(angle) * 0.2 + 0.3;
+        group.add(strand);
+      }
+    } else {
+      // Straight - flat top
+      const topGeo = new THREE.BoxGeometry(0.38, 0.05, 0.3);
+      const topHair = new THREE.Mesh(topGeo, hairMat);
+      topHair.position.set(head.position.x, head.position.y + 0.2, head.position.z - 0.02);
+      group.add(topHair);
+    }
+  }
+
+  function getSkinColor() {
+    const skinVariant = selectedTraits.skinTone;
+    if (!skinVariant) return 0xF1C27D;
+    const v = GENE_DATABASE.skinTone.variants[skinVariant];
+    return new THREE.Color(v.color).getHex();
+  }
+
+  function getEyeColor() {
+    const eyeVariant = selectedTraits.eyeColor;
+    if (!eyeVariant) return 0x5C3317;
+    const v = GENE_DATABASE.eyeColor.variants[eyeVariant];
+    return new THREE.Color(v.color).getHex();
+  }
+
+  function getHairColor() {
+    const hairVariant = selectedTraits.hairColor;
+    if (!hairVariant) return 0x3D1F15;
+    const v = GENE_DATABASE.hairColor.variants[hairVariant];
+    return new THREE.Color(v.color).getHex();
+  }
+
+  let autoRotate = true;
+
+  function animate() {
+    animFrame = requestAnimationFrame(animate);
+    if (autoRotate && humanGroup && !isDragging) {
+      humanGroup.rotation.y += 0.003;
+    }
+    renderer.render(scene, camera);
+  }
+
+  function updateModel() {
+    buildHuman();
+  }
+
+  // =============================================
+  // GENE CODE OUTPUT
+  // =============================================
+  function updateGeneOutput() {
+    const output = document.getElementById('gene-output');
+    const genomeCode = document.getElementById('genome-code');
+
+    if (Object.keys(selectedTraits).length === 0) {
+      output.innerHTML = '<div class="no-trait">Select traits on the left<br>to see gene codes</div>';
+      genomeCode.innerHTML = '// No traits selected<br>// Apply traits to generate SNP profile';
+      return;
+    }
+
+    let html = '';
+    let allCodes = [];
+
+    Object.entries(selectedTraits).forEach(([traitKey, varKey]) => {
+      const traitData = GENE_DATABASE[traitKey];
+      if (!traitData) return;
+      const variant = traitData.variants[varKey];
+      if (!variant) return;
+
+      allCodes.push(variant.code);
+
+      html += `
+        <div class="gene-summary-card">
+          <div class="gene-card-header">
+            ${traitData.label}
+            <span style="color: var(--text-dim); font-size:9px">${variant.frequency || ''}</span>
+          </div>
+          <div class="gene-card-body">
+            <div class="trait-display">
+              <div class="trait-display-name">Selected Phenotype</div>
+              <div class="trait-display-value">
+                ${variant.color ? `<span class="color-dot" style="background:${variant.color};width:10px;height:10px;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:5px"></span>` : ''}
+                ${variant.label}
+              </div>
+              ${variant.heritage ? `<div class="heritage-tag">${variant.heritage}</div>` : ''}
+            </div>
+            
+            <div class="gene-loci">
+              ${variant.genes ? variant.genes.map(g => `
+                <div class="locus-row">
+                  <div class="locus-gene">${g.gene}</div>
+                  <div class="locus-snp">${g.snp}<br><span style="color:var(--text-muted);font-size:8px">${g.allele}</span></div>
+                  <div class="locus-effect">${g.effect}</div>
+                </div>
+              `).join('') : ''}
+            </div>
+
+            <div class="full-code-block">
+              <div class="code-label">SNP Genotype Code</div>
+              <div class="code-text">${variant.code}</div>
+              <button class="copy-btn" onclick="copyCode('${escapeCode(variant.code)}')">COPY SNP CODE</button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    output.innerHTML = html;
+
+    // Compiled genome code
+    const compiled = allCodes.join(' | ');
+    genomeCode.innerHTML = generateGenomeDisplay(compiled);
+  }
+
+  function generateGenomeDisplay(code) {
+    let out = '<span style="color:var(--text-muted)">// Compiled SNP Profile</span>\n';
+    out += '<span style="color:var(--text-muted)">// Reference: GRCh38/hg38</span>\n\n';
+    
+    Object.entries(selectedTraits).forEach(([traitKey, varKey]) => {
+      const traitData = GENE_DATABASE[traitKey];
+      if (!traitData) return;
+      const variant = traitData.variants[varKey];
+      if (!variant) return;
+      
+      out += `<span style="color:var(--accent2)">${traitData.label.toUpperCase()}</span>\n`;
+      if (variant.genes) {
+        variant.genes.forEach(g => {
+          out += `  <span class="highlight">${g.gene}</span> <span class="highlight2">${g.snp}</span>(${g.allele})\n`;
+        });
+      }
+      out += '\n';
+    });
+
+    return out;
+  }
+
+  function escapeCode(code) {
+    return code.replace(/'/g, "\\'").replace(/"/g, '\\"');
+  }
+
+  function copyCode(code) {
+    navigator.clipboard.writeText(code).catch(() => {
+      const el = document.createElement('textarea');
+      el.value = code;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    });
+  }
+
+  // =============================================
+  // VIEW PRESETS
+  // =============================================
+  function setView(view) {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    autoRotate = false;
+    
+    switch(view) {
+      case 'front': camera.position.set(0, 1.6, 4.5); camera.lookAt(0, 1.2, 0); break;
+      case 'side': camera.position.set(4.5, 1.6, 0); camera.lookAt(0, 1.2, 0); break;
+      case '3/4': camera.position.set(3.2, 1.8, 3.2); camera.lookAt(0, 1.2, 0); break;
+      case 'top': camera.position.set(0, 5, 0.5); camera.lookAt(0, 1.2, 0); break;
+    }
+  }
+
+  // =============================================
+  // INIT
+  // =============================================
+  buildControls();
+  initThree();
+  </script>
+</body>
+</html>
