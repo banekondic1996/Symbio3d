@@ -3,36 +3,41 @@
  */
 const App = (() => {
   const selectedTraits = {};
-  let currentSex = 'male';
-  let currentTab = 'visual';
+  let currentSex  = 'male';
+  let currentTab  = 'visual';
   let currentRTab = 'visual-traits';
   let slidersOpen = false;
 
   function init() {
-    Model.init();
+    // Init 3D model
+    Model3D.init();
+
+    // Build UI panels
     Sliders.build();
     TraitTree.build();
     NonVisual.build();
     GeneOutput.render(selectedTraits);
 
-    // Header btn events
-    document.getElementById('btn-add-trait').addEventListener('click', () => Modal.open());
-    document.getElementById('btn-export').addEventListener('click', () => {
+    // Header buttons
+    document.getElementById('btn-add-trait')?.addEventListener('click', () => Modal.open());
+    document.getElementById('btn-export')?.addEventListener('click', () => {
       GeneOutput.exportGenome(selectedTraits, NonVisual.getSelected());
     });
 
-    // Height model bar default
+    // Custom 3D parts button
+    const btn3d = document.getElementById('btn-custom-parts');
+    if (btn3d) btn3d.addEventListener('click', () => CustomPartModal.open());
+
     _updateModelBar();
   }
 
   function setSex(sex) {
     currentSex = sex;
-    document.querySelectorAll('.gs-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.sex === sex);
-    });
+    document.querySelectorAll('.gs-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.sex === sex));
     document.getElementById('mb-sex-label').textContent =
       sex === 'male' ? 'Male' : sex === 'female' ? 'Female' : 'Intersex';
-    Model.setSex(sex);
+    Model3D.setSex(sex);
   }
 
   function setTab(tab) {
@@ -48,17 +53,14 @@ const App = (() => {
   }
 
   function selectTrait(traitKey, varKey, btn) {
-    // Deactivate siblings
     document.querySelectorAll(`[data-trait="${traitKey}"]`).forEach(b => b.classList.remove('active'));
-
     if (selectedTraits[traitKey] === varKey) {
       delete selectedTraits[traitKey];
     } else {
       selectedTraits[traitKey] = varKey;
       btn.classList.add('active');
     }
-
-    Model.setTraits(selectedTraits);
+    Model3D.applyTraits(selectedTraits);
     GeneOutput.render(selectedTraits);
     _updateModelBar();
   }
@@ -66,7 +68,7 @@ const App = (() => {
   function removeTrait(traitKey) {
     delete selectedTraits[traitKey];
     document.querySelectorAll(`[data-trait="${traitKey}"]`).forEach(b => b.classList.remove('active'));
-    Model.setTraits(selectedTraits);
+    Model3D.applyTraits(selectedTraits);
     GeneOutput.render(selectedTraits);
     _updateModelBar();
   }
@@ -79,20 +81,21 @@ const App = (() => {
 
   function toggleSliders() {
     slidersOpen = !slidersOpen;
-    document.getElementById('sliders-panel').classList.toggle('open', slidersOpen);
-    document.getElementById('btn-toggle-sliders').classList.toggle('active', slidersOpen);
+    document.getElementById('sliders-panel')?.classList.toggle('open', slidersOpen);
+    document.getElementById('btn-toggle-sliders')?.classList.toggle('active', slidersOpen);
   }
 
   function copyGenome() {
     const pre = document.getElementById('genome-pre');
     const text = pre.innerText || pre.textContent;
-    navigator.clipboard.writeText(text).catch(()=>{});
-    const btn = document.getElementById('btn-copy-genome') || document.querySelector('.copy-btn');
-    if (btn) { const o=btn.textContent; btn.textContent='COPIED ✓'; setTimeout(()=>btn.textContent=o,1500); }
+    navigator.clipboard.writeText(text).catch(() => {});
+    const btn = document.querySelector('.copy-btn');
+    if (btn) { const o = btn.textContent; btn.textContent = 'COPIED ✓'; setTimeout(() => btn.textContent = o, 1500); }
   }
 
   function rebuildModel() {
-    Model.setTraits(selectedTraits);
+    Model3D.applyTraits(selectedTraits);
+    Model3D.applySliders(Sliders.getValues());
   }
 
   function _updateModelBar() {
@@ -100,9 +103,7 @@ const App = (() => {
     const countEl = document.getElementById('trait-count');
     if (countEl) countEl.textContent = total;
     const bar = document.getElementById('mb-traits');
-    if (bar) bar.textContent = total > 0 ? `${total} trait${total!==1?'s':''} active` : 'No traits selected';
-
-    // Height indicator
+    if (bar) bar.textContent = total > 0 ? `${total} trait${total !== 1 ? 's' : ''} active` : 'No traits selected';
     const hEl = document.getElementById('mb-height');
     if (hEl) {
       hEl.textContent = selectedTraits.height === 'short' ? '152–165'
@@ -110,11 +111,10 @@ const App = (() => {
     }
   }
 
-  function getSelected() { return selectedTraits; }
+  function getSelected()   { return selectedTraits; }
   function getNVSelected() { return NonVisual.getSelected(); }
   function getCurrentSex() { return currentSex; }
 
-  // Init on DOM ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
