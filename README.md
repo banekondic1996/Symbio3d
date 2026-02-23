@@ -27,27 +27,6 @@ A desktop NW.js application that lets you build a 3D human model by selecting re
   - Population frequency
   - Heritage associations
 
-## Running with NW.js
-
-1. **Download NW.js** from https://nwjs.io/
-2. Extract NW.js to a folder
-3. Place this project folder inside (or point NW.js at it)
-
-**On Linux/Mac:**
-```bash
-./nw /path/to/gene-modeler/
-```
-
-**On Windows:**
-```bash
-nw.exe C:\path\to\gene-modeler\
-```
-
-Or use the NW.js SDK version to run directly:
-```bash
-nwjs --enable-webgl .
-```
-
 ## Running as a Web App (Alternative)
 
 Just open `index.html` in Chrome/Firefox — it works as a standalone web app too, since NW.js uses Chromium under the hood.
@@ -63,8 +42,8 @@ The SNP codes are based on real published research:
 - **DCHS2** rs8070877: Cole et al. (2016), *Nature Genetics*
 
 
-**This needs proper 3d rendering functions and models to work as I want it. This looks awful for now**
-<img width="1543" height="993" alt="image" src="https://github.com/user-attachments/assets/8dc61acc-5148-431d-a890-fc8961bff5a3" />
+**This needs proper 3d rendering functions and models to work as I want it.**
+<img width="1534" height="1024" alt="image" src="https://github.com/user-attachments/assets/fabe7127-7d3b-432b-9fb5-e16f89010599" />
 
 
 ---
