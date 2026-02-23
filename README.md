@@ -1,5 +1,7 @@
 # <img width="64" height="64" alt="Symbio3D" src="https://github.com/banekondic1996/Symbio3d/blob/main/Symbio3D.png?raw=true" /> Symbio3d - Gene Modeler — 3D Human Trait Visualizer 
-**Warning: This is just testing concept, and not for usage. It's badly made, don't try it!!!** <br>
+**Warning: This is just testing concept, and not for usage. It's badly made, don't try it!!!**<br>
+Maybe in some distant future I work on it, but for now it's concept
+<br>
 
 A desktop NW.js application that lets you build a 3D human model by selecting real genetic traits, then outputs the actual SNP gene codes associated with each phenotype.
 
@@ -60,12 +62,10 @@ The SNP codes are based on real published research:
 - **TCHH** rs11803731: Medland et al. (2009), *American Journal of Human Genetics*
 - **DCHS2** rs8070877: Cole et al. (2016), *Nature Genetics*
 
-## Controls
 
-- **Left-drag**: Rotate model
-- **Scroll**: Zoom in/out  
-- **Right-drag**: Pan up/down
-- **View buttons**: Preset camera angles (Front, Side, 3/4, Top)
+**This needs proper 3d rendering functions and models to work as I want it. This looks awful for now**
+<img width="1543" height="993" alt="image" src="https://github.com/user-attachments/assets/8dc61acc-5148-431d-a890-fc8961bff5a3" />
+
 
 ---
 
